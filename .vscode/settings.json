@@ -1,4 +1,4 @@
 {
     "rust-analyzer.cargo.target": "msp430-none-elf",
-    "rust-analyzer.checkOnSave.allTargets": false
+    "rust-analyzer.cargo.allTargets": false
 }
