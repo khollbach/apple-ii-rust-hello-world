@@ -1,14 +1,19 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+#![no_std]
+
+use core::panic::PanicInfo;
+
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    // todo: something more useful
+    loop {}
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+const LOW_RES_SCREEN: *mut u8 = 0x400 as _;
+const TEXT_MODE_ON: *mut u8 = 0xc051 as _;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+#[no_mangle]
+extern "C" fn main() -> ! {
+    unsafe { TEXT_MODE_ON.read_volatile() };
+    unsafe { LOW_RES_SCREEN.write_volatile(b'A') };
+    loop {}
 }

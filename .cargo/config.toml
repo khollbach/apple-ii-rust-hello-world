@@ -1,0 +1,6 @@
+[build]
+rustflags = ["--emit=llvm-bc"]
+target = "msp430-none-elf"
+
+[unstable]
+build-std = ["core"]
