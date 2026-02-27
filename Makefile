@@ -21,8 +21,7 @@ build:
 	mkdir -p target/6502
 	mos-common-clang \
 		-o target/6502/$(crate_name) \
-		target/msp430-none-elf/release/deps/$(crate_name)-*.bc \
-		target/msp430-none-elf/release/deps/core-*.bc
+		$$(ls target/msp430-none-elf/release/deps/*.bc | grep -v compiler_builtins-)
 
 clean:
 	cargo clean
