@@ -12,15 +12,32 @@
 #   * Which means we need to use nightly Rust.
 # * The LLVM IR ends up in target/msp430-none-elf/{debug,release}/deps/
 
-crate_name = apple_ii_rust_hello_world
+name := hello
+start_addr := 6000  # This has to match the linker script
+prodos_start_addr := 2000  # Always $2000
+out := target/6502
+downloads := ~/Downloads/apple-ii-programs/
+
+default: dsk wav
+
+wav: build
+	c2t -bc8 $(out)/$(name),$(start_addr) $(out)/$(name).wav
+	if [ -d $(downloads) ]; then cp $(out)/$(name).wav $(downloads); fi
+
+dsk: build
+	cp "build-deps/ProDOS 8.dsk" $(out)/$(name).dsk
+	for f in launcher sysutil fastcopy basic; do ac -d $(out)/$(name).dsk $$f.system; done
+	add-prodos-startup-code --start-addr $(start_addr) < $(out)/$(name) > $(out)/$(name).prodos
+	ac -p $(out)/$(name).dsk $(name).system sys 0x$(prodos_start_addr) < $(out)/$(name).prodos
+	if [ -d $(downloads) ]; then cp $(out)/$(name).dsk $(downloads); fi
 
 # Note that this currently only works if we build in release mode. I don't
 # understand the details, but we get linker errors when building in debug mode.
 build:
 	cargo build --release
-	mkdir -p target/6502
+	mkdir -p $(out)
 	mos-common-clang \
-		-o target/6502/$(crate_name) \
+		-o $(out)/$(name) \
 		$$(ls target/msp430-none-elf/release/deps/*.bc | grep -v compiler_builtins-)
 
 clean:
