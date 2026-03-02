@@ -1,3 +1,4 @@
 [toolchain]
-channel = "nightly"
-targets = ["msp430-none-elf"]
+# I picked a specific version, because otherwise it re-installs a new toolchain
+# every day... There's probably a better fix.
+channel = "nightly-2026-02-24"
