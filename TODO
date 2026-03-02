@@ -1,2 +1,8 @@
 Things to improve:
 - panic error messages would be *sick*
+    > ideas:
+    >   BRK after panic makes sense
+    >   Q: where to print the message?
+    >       (would we want to
+    >           - make sure text mode is enabled
+    >           - or maybe mixed mode ... )
