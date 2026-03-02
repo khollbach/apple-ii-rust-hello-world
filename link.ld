@@ -27,5 +27,18 @@ OUTPUT_FORMAT {
     SHORT(0x0085) /* sta $00 */
     SHORT(0xc0a9) /* lda #$c0 */
     SHORT(0x0185) /* sta $01 */
+
+    /* This is a brittle hack. We jump over the
+     * setup code that gets inserted before our
+     * main function, since it's hard-coded to have
+     * a now-incorrect start address for main. */
+    SHORT(0x1020) /* jsr $6010 -- jump to `main` */
+    SHORT(0x0060) /* +brk -- in case `main` returns */
+
+    /* (This is the code we're jumping over, which
+     * is the first 4 bytes of `ram`.)
+    /* jsr $6004 */
+    /* rts */
+
     TRIM(ram)
 }
