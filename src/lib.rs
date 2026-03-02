@@ -1,18 +1,25 @@
 #![no_std]
 
-use panic_halt as _;
+use core::{arch::asm, hint::black_box};
 
-const LOW_RES_SCREEN: *mut u8 = 0x400 as _;
-const TEXT_MODE_ON: *mut u8 = 0xc051 as _;
+use panic_halt as _;
 
 #[unsafe(no_mangle)]
 extern "C" fn main() -> ! {
-    unsafe { TEXT_MODE_ON.read_volatile() };
-    unsafe { LOW_RES_SCREEN.write_volatile(b'A') };
+    unsafe { (0xc050 as *mut u8).read_volatile(); } // gr
+    unsafe { (0xc057 as *mut u8).read_volatile(); } // hires
 
-    // for i in LOW_RES_SCREEN as u16..0x6000 {
-    //     unsafe { (i as *mut u8).write_volatile(i as u8); }
-    // }
+    loop {
+        for color in [0xff, 0x00] {
+            for i in 0x2000..0x4000 {
+                unsafe { (i as *mut u8).write_volatile(color); }
+
+                for _ in 0..1_000 {
+                    black_box(());
+                }
+            }
+        }
+    }
 
     loop {}
 }

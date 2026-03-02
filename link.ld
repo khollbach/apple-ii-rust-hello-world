@@ -8,7 +8,7 @@ ASSERT(__rc31 == 0x001f, "Inconsistent zero page map.")
 
 MEMORY {
     zp : ORIGIN = __rc31 + 1, LENGTH = 0x100 - (__rc31 + 1)
-    ram (rw) : ORIGIN = 0x6000, LENGTH = 0x6000
+    ram (rw) : ORIGIN = 0x600c, LENGTH = 0x6000
 }
 
 REGION_ALIAS("c_readonly", ram)
