@@ -1,73 +1,79 @@
 use crate::mem;
 
-// Enable graphics mode.
-fn gr(enable: bool) {
-    if (enable) {
-        mem::read(0xC050); // text mode off
+/// Enable text mode.
+pub fn text(enable: bool) {
+    if enable {
+        unsafe { mem::read(0xC051) };
     } else {
-        mem::read(0xC051); // text mode on
+        unsafe { mem::read(0xC050) };
     }
 }
 
-// Toggle mixed graphics and text.
-fn mixed(enable: bool) {
-    if (enable) {
-        mem::read(0xC053);
+/// Enable mixed graphics and text.
+pub fn mixed(enable: bool) {
+    if enable {
+        unsafe { mem::read(0xC053) };
     } else {
-        mem::read(0xC052);
+        unsafe { mem::read(0xC052) };
     }
 }
 
-fn draw_pixel(p: Point, color: u8) {
-    mem::write(coord_to_addr(p), color << 4 | color);
+/// Enable high-resolution graphics.
+pub fn hires(enable: bool) {
+    if enable {
+        unsafe { mem::read(0xC057) };
+    } else {
+        unsafe { mem::read(0xC056) };
+    }
 }
 
-// Note that `rect` indices exlude the bottom-right point.
-//
-// A naive for-loop was too slow (maybe we're supposed to turn on optimizations
-// in the compiler?) so we're using library routines instead.
-//
-// It's plenty fast, but it's using text-mode glyphs to draw the lines,
-// e.g. "-------------" is a horizontal line, so it looks kinda glitchy in
-// gr mode. But honestly, it's growing on me, so we'll keep it for now.
-void draw_box(rect r) {
-    i8 dx = r.bot_right.x - r.top_left.x;
-    i8 dy = r.bot_right.y - r.top_left.y;
-
-    // Make indices inclusive.
-    r.bot_right = minus(r.bot_right, one_one);
-
-    chlinexy(r.top_left.x, r.top_left.y, dx); // top
-    chlinexy(r.top_left.x, r.bot_right.y, dx); // bottom
-    cvlinexy(r.top_left.x, r.top_left.y, dy); // left
-    cvlinexy(r.bot_right.x, r.top_left.y, dy); // right
+/// Write a black pixel to all low-res graphics memory.
+pub fn clear_lowres() {
+    for i in 0x400..0x800 {
+        unsafe { mem::write(i, 0) }
+    }
 }
 
-// What is the memory address for this low-res pixel?
-//
-// Note that there's technically a "top-half" and a "bottom-half"
-// to each of these "pixels". Each can hold a 4-bit color.
-u16 coord_to_addr(point p) {
-    u8 group;
-    u16 base, offset;
-    assert(p.x < 40);
-    assert(p.y < 24);
+/// A coordinate on the low-res (or text mode) screen.
+///
+/// Note that there's technically a "top-half" and a "bottom-half" to each of
+/// these "pixels", in GR mode. Each can hold a 4-bit color.
+pub struct Point {
+    x: u8,
+    y: u8,
+}
 
-    group = p.y / 8;
-    switch (group) {
-    case 0:
-        base = 0x400;
-        break;
-    case 1:
-        base = 0x428;
-        break;
-    case 2:
-        base = 0x450;
-        break;
+impl Point {
+    pub fn new(x: u8, y: u8) -> Self {
+        assert!(x < 40);
+        assert!(y < 24);
+        Self { x, y }
     }
 
-    offset = p.y % 8 * 0x80;
+    pub fn read(self) -> u8 {
+        unsafe { self.addr().read_volatile() }
+    }
 
-    return base + offset + p.x;
+    pub fn write(self, value: u8) {
+        unsafe { self.addr().write_volatile(value) }
+    }
+
+    /// What is the memory address for this low-res pixel?
+    fn addr(self) -> *mut u8 {
+        let x: u16 = self.x.into();
+        let y: u16 = self.y.into();
+
+        let group = y / 8;
+        let base = match group {
+            0 => 0x400,
+            1 => 0x428,
+            2 => 0x450,
+            _ => unreachable!(),
+        };
+
+        let offset = y % 8 * 0x80;
+
+        let addr: u16 = base + offset + x;
+        addr as _
+    }
 }
-

@@ -1,24 +1,21 @@
 #![no_std]
 
-use core::{arch::asm, hint::black_box};
+mod mem;
+mod screen;
 
 use panic_halt as _;
 
+use crate::screen::Point;
+
 #[unsafe(no_mangle)]
 extern "C" fn main() -> ! {
-    unsafe { (0xc050 as *mut u8).read_volatile(); } // gr
-    unsafe { (0xc057 as *mut u8).read_volatile(); } // hires
+    screen::text(false);
+    screen::hires(false);
+    screen::clear_lowres();
 
-    loop {
-        for color in [0xff, 0x00] {
-            for i in 0x2000..0x4000 {
-                unsafe { (i as *mut u8).write_volatile(color); }
-
-                for _ in 0..1_000 {
-                    black_box(());
-                }
-            }
-        }
+    let initial_cells = [(19, 12), (20, 11), (20, 12), (20, 13), (21, 11)];
+    for (x, y) in initial_cells {
+        Point::new(x, y).write(0xff);
     }
 
     loop {}
